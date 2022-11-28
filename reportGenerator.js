@@ -2,8 +2,9 @@ const { readFileSync, appendFileSync, unlinkSync } = require("fs")
 const path = require("path")
 const _ = require("lodash")
 
-const OLD_RECORDS_PATH = path.resolve(__dirname, "oldTest")
-const NEW_RECORDS_PATH = path.resolve(__dirname, "newTest")
+// "old" and "new" filenames are from process.env.POSTGRES_DB for the pre and post-migration containers, respectively
+const OLD_RECORDS_PATH = path.resolve(__dirname, "old")
+const NEW_RECORDS_PATH = path.resolve(__dirname, "new")
 const REPORT_PATH = path.resolve(__dirname, "report.txt")
 
 const ChangeType = {
