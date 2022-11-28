@@ -7,7 +7,7 @@ const db = pgp("postgres://" +
                 PG_USER + 
                 ":" + PG_PASSWORD +
                 "@localhost/" + PG_DB)
-const { writeFileSync }= require('fs')
+const { writeFileSync } = require('fs')
 
 /* 
  * Extracts all records from Postgres DB,
@@ -28,7 +28,7 @@ async function preprocess() {
             res = await db.any("SELECT * FROM " + table)
             // sort data by primary key id, which is a string
             res.sort((a, b) => (a.id > b.id) - (a.id < b.id))
-            fs.writeFileSync(process.env.POSTGRES_DB, JSON.stringify(res))
+            writeFileSync(process.env.POSTGRES_DB, JSON.stringify(res))
             console.log("Write complete for DB " + process.env.POSTGRES_DB)
         } catch (err) {
             console.error("Error occurred during query + write of DB", err)

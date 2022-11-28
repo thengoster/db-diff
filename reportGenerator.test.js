@@ -32,16 +32,21 @@ jest.mock("fs", () => ({
           return `Modified: 1
 {"id":"1","name":"Mamba"}
 {"id":"1","name":"Mamba","email":"Mamba@mail.com"}
+
 Modified: 2
 {"id":"2","name":"Bobo","email":"Denny@mail.com","nickname":"Bo"}
 {"id":"2","name":"Bobo","email":"Denny@mail.com"}
+
 Modified: a
 {"id":"a","name":"Dan","email":"Dan@goodmail.net"}
 {"id":"a","name":"Dan","email":"Dan@badmail.net"}
+
 Removed: b
 {"id":"b","name":"Denny","email":"Denny@mail.com"}
+
 Added: c
 {"id":"c","name":"Monica","email":"Monica@mail.com"}
+
 `
         } else {
           return `[]`

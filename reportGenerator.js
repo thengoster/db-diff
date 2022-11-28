@@ -45,15 +45,15 @@ async function appendToReport(reportPath, oldRecord, newRecord, changeType) {
     case ChangeType.Modified:
       appendFileSync(reportPath, ChangeType.Modified + ": " + oldRecord.id + "\n")
       appendFileSync(reportPath, JSON.stringify(oldRecord) + "\n")
-      appendFileSync(reportPath, JSON.stringify(newRecord) + "\n")
+      appendFileSync(reportPath, JSON.stringify(newRecord) + "\n\n")
       break
     case ChangeType.Removed:
       appendFileSync(reportPath, ChangeType.Removed + ": " + oldRecord.id + "\n")
-      appendFileSync(reportPath, JSON.stringify(oldRecord) + "\n")
+      appendFileSync(reportPath, JSON.stringify(oldRecord) + "\n\n")
       break
     case ChangeType.Added:
       appendFileSync(reportPath, ChangeType.Added + ": " + newRecord.id + "\n")
-      appendFileSync(reportPath, JSON.stringify(newRecord) + "\n")
+      appendFileSync(reportPath, JSON.stringify(newRecord) + "\n\n")
       break
     default:
       console.error("changeType needs to be one of: Modified, Removed, Added")
