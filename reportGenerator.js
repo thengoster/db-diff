@@ -4,6 +4,7 @@ const _ = require("lodash")
 
 const OLD_RECORDS_PATH = path.resolve(__dirname, "oldTest")
 const NEW_RECORDS_PATH = path.resolve(__dirname, "newTest")
+const REPORT_PATH = path.resolve(__dirname, "report.txt")
 
 const ChangeType = {
   Modified: "Modified",
@@ -11,25 +12,33 @@ const ChangeType = {
   Added: "Added",
 }
 
-const REPORT_PATH = path.resolve(__dirname, "report.txt")
-
 try {
   unlinkSync(REPORT_PATH);
   console.log("Deleted report file successfully.")
 } catch (err) {
-  // console.log(err)
+  // ignore errors here, catch just in case so program does not crash
 }
 
+/* 
+ * Helper function that uses the preprocessed records 
+ * that we obtained from preprocess.js.
+ * These records are read and promptly put back into an array of 
+ * JSON objects to facilitate comparisons of old vs new records
+ */
 function readRecords(oldRecordsPath, newRecordsPath) {
   try {
     oldRecords = JSON.parse(readFileSync(oldRecordsPath, "utf8"))
     newRecords = JSON.parse(readFileSync(newRecordsPath, "utf8"))
     return [oldRecords, newRecords]
   } catch (err) {
-    console.error("Records file for old or new db not found", err)
+    console.error("Records file for old or new DB not found", err)
   }
 }
 
+/* 
+ * Helper function to append modified, removed, and/or 
+ * added records to the report file
+ */
 async function appendToReport(reportPath, oldRecord, newRecord, changeType) {
   switch (changeType) {
     case ChangeType.Modified:
@@ -50,10 +59,17 @@ async function appendToReport(reportPath, oldRecord, newRecord, changeType) {
   }
 }
 
+/* 
+ * Generates a report of modified, removed, or added records.
+ * Calls readRecords() to obtain two arrays of JSON object records.
+ * These records can then be compared directly to each other by
+ * primary key id to identify whether any corruption in data has occurred
+ */
 async function reportGenerator(oldRecordsPath, newRecordsPath, reportPath) {
   let i = 0, j = 0
 
   const [oldRecords, newRecords] = readRecords(oldRecordsPath, newRecordsPath)
+
   while (i < oldRecords.length && j < newRecords.length) {
     if (oldRecords[i].id === newRecords[j].id) {
       // start with simple dump of the contents if the two records are not the same

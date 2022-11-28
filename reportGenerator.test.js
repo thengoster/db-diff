@@ -5,6 +5,8 @@ const path = require("path")
 
 var MOCK_OLD_RECORDS_PATH = path.resolve(__dirname, "oldTest")
 var MOCK_NEW_RECORDS_PATH = path.resolve(__dirname, "newTest")
+var MOCK_REPORT_PATH = path.resolve(__dirname, "report.txt")
+var MOCK_REPORT_TEST_PATH = path.resolve(__dirname, "reportTest.txt")
 
 const ChangeType = {
   Modified: "Modified",
@@ -12,11 +14,13 @@ const ChangeType = {
   Added: "Added",
 }
 
-var MOCK_REPORT_PATH = path.resolve(__dirname, "report.txt")
-var MOCK_REPORT_TEST_PATH = path.resolve(__dirname, "reportTest.txt")
-
 var report = ""
 
+/* Since we do not want to actually modify the file system, we will
+ * mock the relevant fs functions we use (readFileSync, appendFileSync)
+ * to be in a state where we can compare what reportGenerator()
+ * gives vs what we expect
+ */
 jest.mock("fs", () => ({
     readFileSync: jest.fn((filePath) => {
         if (filePath === MOCK_OLD_RECORDS_PATH) {
@@ -24,6 +28,7 @@ jest.mock("fs", () => ({
         } else if (filePath === MOCK_NEW_RECORDS_PATH) {
           return `[{"id":"0","name":"Denny","email":"Denny@mail.com"},{"id":"1","name":"Mamba","email":"Mamba@mail.com" },{"id":"2","name":"Bobo","email":"Denny@mail.com"},{"id":"a","name":"Dan","email":"Dan@badmail.net"},{"id":"c","name":"Monica","email":"Monica@mail.com"}]`
         } else if (filePath === MOCK_REPORT_TEST_PATH) {
+/* expected output of report below */
           return `Modified: 1
 {"id":"1","name":"Mamba"}
 {"id":"1","name":"Mamba","email":"Mamba@mail.com"}
@@ -44,7 +49,6 @@ Added: c
     }),
     appendFileSync: jest.fn((filePath, appendData) => {
       if (filePath === MOCK_REPORT_PATH) {
-        console.log(appendData)
         report += appendData
       }
     })
@@ -56,7 +60,7 @@ describe('reportGenerator test cases', () => {
       unlinkSync(REPORT_PATH);
       console.log("Deleted report file successfully.")
     } catch (err) {
-      // console.log(err)
+      // ignore errors here, catch just in case so program does not crash
     }
   })
 
