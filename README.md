@@ -72,7 +72,6 @@ npm install
 *** How to use programs ***
 With the volume setup out of the way, we can begin using the actual program from our git repo.
 
-```
 To preprocess records from a docker container:
 ```
 node preprocess.js
