@@ -23,39 +23,68 @@ For windows local machine:
 
 Install Docker Desktop
 In a local terminal, create a docker volume using:
-  docker volume create sharedVol
+```
+docker volume create <volume_name>
+```
 Run our container with the volume, which will contain all of our program code.
-  docker run -p 5432:5432 -v sharedVol:/sharedVol guaranteedrate/homework-pre-migration:1607545060-a7085621
+```
+docker run -p 5432:5432 -v <volume_name>:<volume_path> guaranteedrate/homework-pre-migration:1607545060-a7085621
+```
+Make sure your volumn_path does not conflict with existing paths!
+
 Using a shared volume, we can preprocess the data from both containers and then use that to generate our report.
 
-Enter the container itself in a terminal (I use a vscode extension to remotely connect to the container) or through the docker desktop built-in terminal itself, where we can now in the docker container:
-cd /sharedVol
+container_id for the container can be found using the command:
+```
+docker ps
+```
 
-*** Install node and npm ***
+Enter the container itself in a terminal and cd to our volume once inside the container:
+```
+docker exec -it <container_id> /bin/bash
+cd <volume_path>
+```
 
+*** Install node, npm, and git ***
+Unfortunately, installation of node, npm, and git must be completed on both pre and post-migration containers at the time of completion.
+Paste the following into your terminal, Entering Y when prompted to continue downloads. Do the same in the other container as well.
+```
 apt update
 apt install curl
+touch ~/.bash_profile
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 nvm install node
 nvm install-latest-npm
+apt install git-all
+```
 
-*** Clone git repo ***
-
+*** Clone git repo, install npm packages ***
+Thankfully, this step only needs to be run once!
+```
 git clone https://github.com/thengoster/db-diff.git
+cd db-diff
+npm install
+```
 
-*** How to use ***
+*** How to use programs ***
+With the volume setup out of the way, we can begin using the actual program from our git repo.
 
-cd to db-diff repo, so in this example:
-  cd /sharedVol/db-diff
+```
 To preprocess records from a docker container:
-  node preprocess.js
-You will need to run this once for each container (old and new) to generate files named "old" and "new", respectively
+```
+node preprocess.js
+```
+You will need to run the above command once for each container (old and new) to generate files named "old" and "new", respectively
 
 To generate the report, which can be found in report.txt:
-  node reportGenerator.js
+```
+node reportGenerator.js
+```
   
 To run test cases:
-  npm test
-  
+```
+npm test
+``` 
