@@ -32,4 +32,4 @@ async function preprocess() {
 }
 
 preprocess()
-module.exports = { preprocess }
+module.exports = preprocess

@@ -1,8 +1,9 @@
-const fs = require('fs')
-const _ = require('lodash')
+const { readFileSync, appendFileSync, unlinkSync } = require("fs")
+const path = require("path")
+const _ = require("lodash")
 
-const OLD_DATA_PATH = "old"
-const NEW_DATA_PATH = "new"
+const OLD_RECORDS_PATH = path.resolve(__dirname, "oldTest")
+const NEW_RECORDS_PATH = path.resolve(__dirname, "newTest")
 
 const ChangeType = {
   Modified: "Modified",
@@ -10,77 +11,80 @@ const ChangeType = {
   Added: "Added",
 }
 
-const REPORT_PATH = "report.txt"
+const REPORT_PATH = path.resolve(__dirname, "report.txt")
 
 try {
-  fs.unlinkSync(REPORT_PATH);
+  unlinkSync(REPORT_PATH);
   console.log("Deleted report file successfully.")
 } catch (err) {
   // console.log(err)
 }
 
-let oldData = [], newData = []
-
-try {
-  oldData = JSON.parse(fs.readFileSync(OLD_DATA_PATH, "utf8"))
-  newData = JSON.parse(fs.readFileSync(NEW_DATA_PATH, "utf8"))
-} catch (err) {
-  console.error("Data file for old or new db not found", err)
+function readRecords(oldRecordsPath, newRecordsPath) {
+  try {
+    oldRecords = JSON.parse(readFileSync(oldRecordsPath, "utf8"))
+    newRecords = JSON.parse(readFileSync(newRecordsPath, "utf8"))
+    return [oldRecords, newRecords]
+  } catch (err) {
+    console.error("Records file for old or new db not found", err)
+  }
 }
 
-async function appendToReport(oldData, newData, changeType) {
+async function appendToReport(reportPath, oldRecord, newRecord, changeType) {
   switch (changeType) {
     case ChangeType.Modified:
-      fs.appendFileSync(REPORT_PATH, ChangeType.Modified + ": " + oldData.id + "\n")
-      fs.appendFileSync(REPORT_PATH, JSON.stringify(oldData) + "\n")
-      fs.appendFileSync(REPORT_PATH, JSON.stringify(newData) + "\n")
+      appendFileSync(reportPath, ChangeType.Modified + ": " + oldRecord.id + "\n")
+      appendFileSync(reportPath, JSON.stringify(oldRecord) + "\n")
+      appendFileSync(reportPath, JSON.stringify(newRecord) + "\n")
       break
     case ChangeType.Removed:
-      fs.appendFileSync(REPORT_PATH, ChangeType.Removed + ": " + oldData.id + "\n")
-      fs.appendFileSync(REPORT_PATH, JSON.stringify(oldData) + "\n")
+      appendFileSync(reportPath, ChangeType.Removed + ": " + oldRecord.id + "\n")
+      appendFileSync(reportPath, JSON.stringify(oldRecord) + "\n")
       break
     case ChangeType.Added:
-      fs.appendFileSync(REPORT_PATH, ChangeType.Added + ": " + newData.id + "\n")
-      fs.appendFileSync(REPORT_PATH, JSON.stringify(newData) + "\n")
+      appendFileSync(reportPath, ChangeType.Added + ": " + newRecord.id + "\n")
+      appendFileSync(reportPath, JSON.stringify(newRecord) + "\n")
       break
     default:
       console.error("changeType needs to be one of: Modified, Removed, Added")
   }
 }
 
-async function reportGenerator () {
+async function reportGenerator(oldRecordsPath, newRecordsPath, reportPath) {
   let i = 0, j = 0
-  while (i < oldData.length && j < newData.length) {
-    if (oldData[i].id === newData[j].id) {
+
+  const [oldRecords, newRecords] = readRecords(oldRecordsPath, newRecordsPath)
+  while (i < oldRecords.length && j < newRecords.length) {
+    if (oldRecords[i].id === newRecords[j].id) {
       // start with simple dump of the contents if the two records are not the same
-      if (!_.isEqual(oldData[i], newData[j])) {
-        await appendToReport(oldData[i], newData[j], ChangeType.Modified)
+      if (!_.isEqual(oldRecords[i], newRecords[j])) {
+        await appendToReport(reportPath, oldRecords[i], newRecords[j], ChangeType.Modified)
       }
       ++i, ++j
-    } else if (oldData[i].id < newData[j].id) {
-      // new db missing an oldData record
-      await appendToReport(oldData[i], newData[j], ChangeType.Removed)
+    } else if (oldRecords[i].id < newRecords[j].id) {
+      // new db missing an oldRecord record
+      await appendToReport(reportPath, oldRecords[i], newRecords[j], ChangeType.Removed)
       ++i
     } else {
       // new db has a new record that was not in the old db
-      await appendToReport(oldData[i], newData[j], ChangeType.Added)
+      await appendToReport(reportPath, oldRecords[i], newRecords[j], ChangeType.Added)
       ++j
     }
   }
 
-  if (i < oldData.length) {
+  if (i < oldRecords.length) {
     // old records that did not make it
-    await appendToReport(oldData[i], newData[j], ChangeType.Removed)
+    await appendToReport(reportPath, oldRecords[i], newRecords[j], ChangeType.Removed)
     ++i
   }
 
-  if (j < newData.length) {
+  if (j < newRecords.length) {
     // all new records
-    await appendToReport(oldData[i], newData[j], ChangeType.Added)
+    await appendToReport(reportPath, oldRecords[i], newRecords[j], ChangeType.Added)
     ++j
   }
 }
 
-reportGenerator()
+reportGenerator(OLD_RECORDS_PATH, NEW_RECORDS_PATH, REPORT_PATH)
 
-module.exports = { reportGenerator }
+module.exports = { readRecords, reportGenerator }
